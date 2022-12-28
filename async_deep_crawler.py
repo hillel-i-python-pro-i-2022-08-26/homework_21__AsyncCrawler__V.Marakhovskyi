@@ -6,6 +6,8 @@ import urllib.error
 import urllib.parse
 import aiohttp
 import bs4
+import pathlib
+import aiofiles
 
 
 class CustomFormatter(logging.Formatter):
@@ -93,11 +95,13 @@ async def work(queue, initial_urls, session: aiohttp.ClientSession, depth, semap
         while depth != 0:
             next_depth_set = []
             current_depth_set = await queue.get()
+            await write_one(file=outfile, urls=current_depth_set, depth=depth)
             for url in current_depth_set:
                 new_links = await parse(url=url, session=session)           # Get a set of found links
                 processed_urls += 1
                 next_depth_set += new_links
                 all_found_links.extend(iter(new_links))   # Sourcery suggestion
+            await write_two(file=outfile, urls=next_depth_set)
             await queue.put(set(next_depth_set))
             depth -= 1
             logger.warning(f'[Transition to the next depth. Remaining depth: {depth}]')
@@ -116,6 +120,31 @@ async def main():
         await asyncio.create_task(work(queue, initial_urls, session=session, depth=DEPTH, semaphore=semaphore))
     # wait for all items to be processed
     # await queue.join()
+
+
+here = pathlib.Path(__file__).parent
+outpath = here.joinpath("output")
+outfile = outpath.joinpath('outfile.txt')
+
+
+async def write_one(file, urls, depth):
+    """Write the found HREFs from `url` to `file`."""
+    async with aiofiles.open(file, "a") as f:
+        await f.write(f'\nCurrent depth is {depth}.\n  \nProcessed URLS:\n')
+        for url in urls:
+            await f.write(f'{url}\n')
+
+        logger.error("Wrote results for source URL: %s", urls)
+
+async def write_two(file, urls):
+    """Write the found HREFs from `url` to `file`."""
+    async with aiofiles.open(file, "a") as f:
+        await f.write(f'\nFound Links:\n')
+        for url in urls:
+            await f.write(f'{url}\n')
+
+        logger.error("Wrote results for source URL: %s", urls)
+
 
 
 
