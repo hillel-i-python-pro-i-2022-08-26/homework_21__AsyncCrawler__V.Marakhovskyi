@@ -8,6 +8,10 @@ import bs4
 import pathlib
 import aiofiles
 
+here = pathlib.Path(__file__).parent
+outpath = here.joinpath("output")
+outfile = outpath.joinpath("outfile.txt")
+
 
 class CustomFormatter(logging.Formatter):
 
@@ -46,7 +50,7 @@ ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)
 
 
-async def fetch(url, session: aiohttp.ClientSession, **kwargs):
+async def fetch(url, session: aiohttp.ClientSession, **kwargs) -> str:
     """Get HTML-text from the url."""
     response = await session.request(method="GET", url=url, **kwargs)
     html_text = await response.text()
@@ -86,48 +90,7 @@ async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
     return list(found)
 
 
-async def work(queue, initial_urls, session: aiohttp.ClientSession, depth, semaphore):
-    async with semaphore:
-        await queue.put(initial_urls)
-        logger.warning(f"------Diving into the first depth. Desired depth: {depth}------")
-        processed_urls = 0
-        all_found_links = []
-        while depth != 0:
-            next_depth_set = []
-            current_depth_set = await queue.get()
-            await write_processed_urls(file=outfile, urls=current_depth_set, depth=depth)
-            for url in current_depth_set:
-                new_links = await parse(url=url, session=session)  # Get a set of found links
-                processed_urls += 1
-                next_depth_set += new_links
-                all_found_links.extend(iter(new_links))  # Sourcery suggestion
-            await write_found_links(file=outfile, urls=next_depth_set)
-            await queue.put(set(next_depth_set))
-            depth -= 1
-            logger.warning(f"[Transition to the next depth. Remaining depth: {depth}]")
-            logger.warning(f"Total processed urls: {processed_urls}")
-            logger.warning(f"Total found links: {len(all_found_links)}")
-        logger.debug(f"<<<Required depth [{DEPTH}] reached>>>")
-        logger.debug(f"Total processed urls: {processed_urls}")
-        logger.debug(f"Total found links: {len(all_found_links)}")
-
-
-async def main():
-    # create the shared queue
-    queue = asyncio.Queue()
-    semaphore = asyncio.Semaphore(5)
-    async with aiohttp.ClientSession() as session:
-        await asyncio.create_task(work(queue, initial_urls, session=session, depth=DEPTH, semaphore=semaphore))
-    # wait for all items to be processed
-    # await queue.join()
-
-
-here = pathlib.Path(__file__).parent
-outpath = here.joinpath("output")
-outfile = outpath.joinpath("outfile.txt")
-
-
-async def write_processed_urls(file, urls: str, depth: int) -> None:
+async def write_processed_urls(file, urls: list, depth: int) -> None:
     """Write the found HREFs from `url` to `file`."""
     async with aiofiles.open(file, "a") as f:
         await f.write(f"\nCurrent depth is {depth}.\n  \nProcessed URLS:\n")
@@ -143,9 +106,50 @@ async def write_found_links(file, urls: list) -> None:
             await f.write(f"{url}\n")
 
 
+async def work(
+    queue: asyncio.Queue, initial_urls: list, session: aiohttp.ClientSession, depth: int, semaphore: asyncio.Semaphore
+) -> None:
+    async with semaphore:
+        await queue.put(initial_urls)
+        logger.warning(f"------Diving into the first depth. Desired depth: {depth}------")
+        processed_urls = 0
+        all_found_links = []
+        while depth != 0:
+            next_depth_set = []
+            current_depth_set = await queue.get()
+            await write_processed_urls(file=outfile, urls=current_depth_set, depth=depth)
+            for url in current_depth_set:
+                new_links = await parse(url=url, session=session)  # Get a set of found links without duplicates
+                processed_urls += 1
+                next_depth_set += new_links
+                all_found_links.extend(iter(new_links))  # Sourcery suggestion
+            await write_found_links(file=outfile, urls=next_depth_set)
+            await queue.put(set(next_depth_set))
+            depth -= 1
+            logger.warning(f"[Transition to the next depth. Remaining depth: {depth}]")
+            logger.warning(f"Total processed urls: {processed_urls}")
+            logger.warning(f"Total found links: {len(all_found_links)}")
+        logger.debug(f"<<<Required depth [{DEPTH}] reached>>>")
+        logger.debug(f"Total processed urls: {processed_urls}")
+        logger.debug(f"Total found links: {len(all_found_links)}")
+        logger.debug(f"All links was written to: {outfile}")
+
+
+async def main():
+    # create the shared queue
+    queue = asyncio.Queue()
+    semaphore = asyncio.Semaphore(5)
+    async with aiohttp.ClientSession() as session:
+        await asyncio.create_task(
+            work(queue=queue, initial_urls=initial_urls, session=session, depth=DEPTH, semaphore=semaphore)
+        )
+    # wait for all items to be processed
+    # await queue.join()
+
+
 if __name__ == "__main__":
     DEPTH = 2
-    initial_urls = ["https://www.safepal.com/", "https://example.com"]
+    initial_urls = ["https://www.godina-worldwide.com/#", "https://example.com"]
     logger.debug("Initializing a crawling....")
     # start the asyncio program
     start = time.perf_counter()
