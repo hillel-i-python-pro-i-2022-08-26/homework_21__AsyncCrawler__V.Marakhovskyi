@@ -135,7 +135,7 @@ async def write_processed_urls(file, urls: str, depth: int) -> None:
             await f.write(f"{url}\n")
 
 
-async def write_found_links(file, urls: str) -> None:
+async def write_found_links(file, urls: list) -> None:
     """Write the found HREFs from `url` to `file`."""
     async with aiofiles.open(file, "a") as f:
         await f.write("\nFound Links:\n")
