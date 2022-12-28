@@ -1,5 +1,4 @@
 import time
-from urllib.parse import urljoin
 import asyncio
 import logging
 import urllib.error
@@ -27,13 +26,14 @@ class CustomFormatter(logging.Formatter):
         logging.INFO: grey + format + reset,
         logging.WARNING: yellow + format + reset,
         logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
+        logging.CRITICAL: bold_red + format + reset,
     }
 
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
+
 
 # create logger
 logger = logging.getLogger("AsyncCrawler")
@@ -46,14 +46,14 @@ ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)
 
 
-
 async def fetch(url, session: aiohttp.ClientSession, **kwargs):  # ОДНА ССЫЛКА
     response = await session.request(method="GET", url=url, **kwargs)
     html_text = await response.text()
     return html_text
 
+
 async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
-    """Find HREFs in the HTML of `url`."""                      # С ОДНОЙ ССЫЛКИ ПОЛУЧАЕМ ВНУТРЕННИЙ СЭТ
+    """Find HREFs in the HTML of `url`."""  # С ОДНОЙ ССЫЛКИ ПОЛУЧАЕМ ВНУТРЕННИЙ СЭТ
     found = set()
     try:
         html = await fetch(url=url, session=session, **kwargs)
@@ -69,14 +69,12 @@ async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
         )
         return list(found)
     except Exception as e:
-        logger.exception(
-            "Non-aiohttp exception occured:  %s", getattr(e, "__dict__", {})
-        )
+        logger.exception("Non-aiohttp exception occured:  %s", getattr(e, "__dict__", {}))
         return list(found)
     else:
-        soup = bs4.BeautifulSoup(markup=html, features='html.parser')
-        for link_element in soup.find_all('a'):
-            link = link_element.get('href')
+        soup = bs4.BeautifulSoup(markup=html, features="html.parser")
+        for link_element in soup.find_all("a"):
+            link = link_element.get("href")
             try:
                 abslink = urllib.parse.urljoin(url, link)
             except (urllib.error.URLError, ValueError):
@@ -86,10 +84,11 @@ async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
     logger.info("Found %d links for %s", len(found), url)
     return list(found)
 
+
 async def work(queue, initial_urls, session: aiohttp.ClientSession, depth, semaphore):
     async with semaphore:
         await queue.put(initial_urls)
-        logger.warning(f'------Diving into the first depth. Desired depth: {depth}------')
+        logger.warning(f"------Diving into the first depth. Desired depth: {depth}------")
         processed_urls = 0
         all_found_links = []
         while depth != 0:
@@ -97,19 +96,19 @@ async def work(queue, initial_urls, session: aiohttp.ClientSession, depth, semap
             current_depth_set = await queue.get()
             await write_one(file=outfile, urls=current_depth_set, depth=depth)
             for url in current_depth_set:
-                new_links = await parse(url=url, session=session)           # Get a set of found links
+                new_links = await parse(url=url, session=session)  # Get a set of found links
                 processed_urls += 1
                 next_depth_set += new_links
-                all_found_links.extend(iter(new_links))   # Sourcery suggestion
+                all_found_links.extend(iter(new_links))  # Sourcery suggestion
             await write_two(file=outfile, urls=next_depth_set)
             await queue.put(set(next_depth_set))
             depth -= 1
-            logger.warning(f'[Transition to the next depth. Remaining depth: {depth}]')
-            logger.warning(f'Total processed urls: {processed_urls}')
-            logger.warning(f'Total found links: {len(all_found_links)}')
-        logger.debug(f'<<<Required depth [{DEPTH}] reached>>>')
-        logger.debug(f'Total processed urls: {processed_urls}')
-        logger.debug(f'Total found links: {len(all_found_links)}')
+            logger.warning(f"[Transition to the next depth. Remaining depth: {depth}]")
+            logger.warning(f"Total processed urls: {processed_urls}")
+            logger.warning(f"Total found links: {len(all_found_links)}")
+        logger.debug(f"<<<Required depth [{DEPTH}] reached>>>")
+        logger.debug(f"Total processed urls: {processed_urls}")
+        logger.debug(f"Total found links: {len(all_found_links)}")
 
 
 async def main():
@@ -124,33 +123,32 @@ async def main():
 
 here = pathlib.Path(__file__).parent
 outpath = here.joinpath("output")
-outfile = outpath.joinpath('outfile.txt')
+outfile = outpath.joinpath("outfile.txt")
 
 
 async def write_one(file, urls, depth):
     """Write the found HREFs from `url` to `file`."""
     async with aiofiles.open(file, "a") as f:
-        await f.write(f'\nCurrent depth is {depth}.\n  \nProcessed URLS:\n')
+        await f.write(f"\nCurrent depth is {depth}.\n  \nProcessed URLS:\n")
         for url in urls:
-            await f.write(f'{url}\n')
+            await f.write(f"{url}\n")
 
         logger.error("Wrote results for source URL: %s", urls)
+
 
 async def write_two(file, urls):
     """Write the found HREFs from `url` to `file`."""
     async with aiofiles.open(file, "a") as f:
-        await f.write(f'\nFound Links:\n')
+        await f.write("\nFound Links:\n")
         for url in urls:
-            await f.write(f'{url}\n')
+            await f.write(f"{url}\n")
 
         logger.error("Wrote results for source URL: %s", urls)
 
 
-
-
 if __name__ == "__main__":
     DEPTH = 2
-    initial_urls = ['https://www.godina-worldwide.com/#', 'https://example.com']
+    initial_urls = ["https://www.godina-worldwide.com/#", "https://example.com"]
     logger.debug("Initializing a crawling....")
     # start the asyncio program
     start = time.perf_counter()
