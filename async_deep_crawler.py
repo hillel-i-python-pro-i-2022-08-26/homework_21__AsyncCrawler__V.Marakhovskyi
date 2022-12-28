@@ -79,7 +79,6 @@ async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
                 abslink = urllib.parse.urljoin(url, link)
             except (urllib.error.URLError, ValueError):
                 logger.exception("Error parsing URL: %s", link)
-                pass
             else:
                 found.add(abslink)
     logger.info("Found %d links for %s", len(found), url)
