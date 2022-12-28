@@ -1,0 +1,7 @@
+# Ignore all
+**
+
+# Exclude
+!Makefile
+!async_deep_crawler.py
+!requirements.txt

@@ -8,11 +8,6 @@ homework-i-run:
 homework-i-purge:
 	@echo Goodbye
 
-.PHONY: init-config
-# Init config files
-init-config:
-	@cp docker-compose.override.dev.yml docker-compose.override.yml && \
-		cp .env.dev .env
 
 .PHONY: init-dev
 # Init environment for development
@@ -36,11 +31,24 @@ pre-commit-run-all:
 .PHONY: d-homework-i-run
 # Make all actions needed for run homework from zero.
 d-homework-i-run:
-	@make init-config && \
-		make d-run
+	@make d-run
 
 .PHONY: d-homework-i-purge
 # Make all actions needed for purge homework related data.
 d-homework-i-purge:
 	@make d-purge
 
+
+.PHONY: d-run
+# Run docker
+d-run:
+		@COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 \
+		docker compose \
+			up --build
+
+.PHONY: d-purge
+# Stop docker
+d-purge:
+		@COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 \
+		docker compose \
+			down --volumes --remove-orphans --rmi local --timeout 0
