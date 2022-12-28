@@ -59,7 +59,7 @@ async def fetch(url, session: aiohttp.ClientSession, **kwargs) -> str:
 
 async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
     """Find HREFs in the HTML of `url`."""
-    found = set()
+    found = set()  # get rid of duplicates initially
     try:
         html = await fetch(url=url, session=session, **kwargs)
     except (
@@ -87,11 +87,11 @@ async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
             else:
                 found.add(abslink)
     logger.info("Found %d links for %s", len(found), url)
-    return list(found)
+    return list(found)  # convert set to list for easier further processing
 
 
 async def write_processed_urls(file, urls: list, depth: int) -> None:
-    """Write the found HREFs from `url` to `file`."""
+    """Write the processed URLS to `file`."""
     async with aiofiles.open(file, "a") as f:
         await f.write(f"\nCurrent depth is {depth}.\n  \nProcessed URLS:\n")
         for url in urls:
@@ -99,7 +99,7 @@ async def write_processed_urls(file, urls: list, depth: int) -> None:
 
 
 async def write_found_links(file, urls: list) -> None:
-    """Write the found HREFs from `url` to `file`."""
+    """Write the found LINKS from `processed URLS` to `file`."""
     async with aiofiles.open(file, "a") as f:
         await f.write("\nFound Links:\n")
         for url in urls:
@@ -109,6 +109,7 @@ async def write_found_links(file, urls: list) -> None:
 async def work(
     queue: asyncio.Queue, initial_urls: list, session: aiohttp.ClientSession, depth: int, semaphore: asyncio.Semaphore
 ) -> None:
+    """Main function which represent a queue. Here is all actions happens."""
     async with semaphore:
         await queue.put(initial_urls)
         logger.warning(f"------Diving into the first depth. Desired depth: {depth}------")
@@ -138,7 +139,7 @@ async def work(
 async def main():
     # create the shared queue
     queue = asyncio.Queue()
-    semaphore = asyncio.Semaphore(5)
+    semaphore = asyncio.Semaphore(10)
     async with aiohttp.ClientSession() as session:
         await asyncio.create_task(
             work(queue=queue, initial_urls=initial_urls, session=session, depth=DEPTH, semaphore=semaphore)
@@ -151,8 +152,8 @@ if __name__ == "__main__":
     DEPTH = 2
     initial_urls = ["https://www.godina-worldwide.com/#", "https://example.com"]
     logger.debug("Initializing a crawling....")
-    # start the asyncio program
     start = time.perf_counter()
+    # start the asyncio program (entry-point)
     asyncio.run(main())
     elapsed = time.perf_counter() - start
     logger.debug(f"Program completed in {elapsed:0.5f} seconds.")
