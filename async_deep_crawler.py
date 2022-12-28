@@ -8,11 +8,12 @@ import bs4
 import pathlib
 import aiofiles
 
+# Create paths for writing into a file
 here = pathlib.Path(__file__).parent
 outpath = here.joinpath("output")
 outfile = outpath.joinpath("outfile.txt")
 
-
+# Formatting logger
 class CustomFormatter(logging.Formatter):
 
     grey = "\x1b[0;37m"
@@ -39,11 +40,11 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-# create logger
+# Create logger
 logger = logging.getLogger("AsyncCrawler")
 logger.setLevel(logging.DEBUG)
 
-# create console handler with a higher log level
+# Create console handler with a higher log level
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 ch.setFormatter(CustomFormatter())
@@ -137,15 +138,13 @@ async def work(
 
 
 async def main():
-    # create the shared queue
+    # Create the shared queue
     queue = asyncio.Queue()
     semaphore = asyncio.Semaphore(10)
     async with aiohttp.ClientSession() as session:
         await asyncio.create_task(
             work(queue=queue, initial_urls=initial_urls, session=session, depth=DEPTH, semaphore=semaphore)
         )
-    # wait for all items to be processed
-    # await queue.join()
 
 
 if __name__ == "__main__":
@@ -153,7 +152,7 @@ if __name__ == "__main__":
     initial_urls = ["https://www.godina-worldwide.com/#", "https://example.com"]
     logger.debug("Initializing a crawling....")
     start = time.perf_counter()
-    # start the asyncio program (entry-point)
+    # Start the asyncio program (entry-point)
     asyncio.run(main())
     elapsed = time.perf_counter() - start
     logger.debug(f"Program completed in {elapsed:0.5f} seconds.")
