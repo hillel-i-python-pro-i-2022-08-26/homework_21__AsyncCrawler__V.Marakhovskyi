@@ -46,14 +46,15 @@ ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)
 
 
-async def fetch(url, session: aiohttp.ClientSession, **kwargs):  # ОДНА ССЫЛКА
+async def fetch(url, session: aiohttp.ClientSession, **kwargs):
+    """Get HTML-text from the url."""
     response = await session.request(method="GET", url=url, **kwargs)
     html_text = await response.text()
     return html_text
 
 
 async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
-    """Find HREFs in the HTML of `url`."""  # С ОДНОЙ ССЫЛКИ ПОЛУЧАЕМ ВНУТРЕННИЙ СЭТ
+    """Find HREFs in the HTML of `url`."""
     found = set()
     try:
         html = await fetch(url=url, session=session, **kwargs)
@@ -94,13 +95,13 @@ async def work(queue, initial_urls, session: aiohttp.ClientSession, depth, semap
         while depth != 0:
             next_depth_set = []
             current_depth_set = await queue.get()
-            await write_one(file=outfile, urls=current_depth_set, depth=depth)
+            await write_processed_urls(file=outfile, urls=current_depth_set, depth=depth)
             for url in current_depth_set:
                 new_links = await parse(url=url, session=session)  # Get a set of found links
                 processed_urls += 1
                 next_depth_set += new_links
                 all_found_links.extend(iter(new_links))  # Sourcery suggestion
-            await write_two(file=outfile, urls=next_depth_set)
+            await write_found_links(file=outfile, urls=next_depth_set)
             await queue.put(set(next_depth_set))
             depth -= 1
             logger.warning(f"[Transition to the next depth. Remaining depth: {depth}]")
@@ -126,29 +127,25 @@ outpath = here.joinpath("output")
 outfile = outpath.joinpath("outfile.txt")
 
 
-async def write_one(file, urls, depth):
+async def write_processed_urls(file, urls: str, depth: int) -> None:
     """Write the found HREFs from `url` to `file`."""
     async with aiofiles.open(file, "a") as f:
         await f.write(f"\nCurrent depth is {depth}.\n  \nProcessed URLS:\n")
         for url in urls:
             await f.write(f"{url}\n")
 
-        logger.error("Wrote results for source URL: %s", urls)
 
-
-async def write_two(file, urls):
+async def write_found_links(file, urls: str) -> None:
     """Write the found HREFs from `url` to `file`."""
     async with aiofiles.open(file, "a") as f:
         await f.write("\nFound Links:\n")
         for url in urls:
             await f.write(f"{url}\n")
 
-        logger.error("Wrote results for source URL: %s", urls)
-
 
 if __name__ == "__main__":
     DEPTH = 2
-    initial_urls = ["https://www.godina-worldwide.com/#", "https://example.com"]
+    initial_urls = ["https://www.safepal.com/", "https://example.com"]
     logger.debug("Initializing a crawling....")
     # start the asyncio program
     start = time.perf_counter()

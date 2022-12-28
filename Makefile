@@ -9,13 +9,13 @@ homework-i-purge:
 	@echo Goodbye
 
 
+
 .PHONY: init-dev
 # Init environment for development
 init-dev:
 	@pip install --upgrade pip && \
 	pip install --requirement requirements.txt && \
 	pre-commit install
-
 
 .PHONY: pre-commit-run
 # Run tools for files from commit.
@@ -28,6 +28,7 @@ pre-commit-run-all:
 	@pre-commit run --all-files
 
 
+
 .PHONY: d-homework-i-run
 # Make all actions needed for run homework from zero.
 d-homework-i-run:
@@ -37,7 +38,6 @@ d-homework-i-run:
 # Make all actions needed for purge homework related data.
 d-homework-i-purge:
 	@make d-purge
-
 
 .PHONY: d-run
 # Run docker
