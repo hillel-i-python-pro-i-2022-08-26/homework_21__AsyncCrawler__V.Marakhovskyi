@@ -1,0 +1,33 @@
+# For generating random data
+faker==15.3.4
+# For organizing data into a table
+prettytable==3.5.0
+
+# [code_style]-[BEGIN]
+# Pre-commit hook.
+pre-commit==2.20.0
+# Upgrade syntax.
+pyupgrade==3.3.1
+# Formatter. Apply codestyle.
+black==22.10.0
+# Check codestyle
+flake8==6.0.0
+# [code_style]-[END]
+requests==2.28.1
+
+pytest==7.2.0
+pytest-benchmark==4.0.0
+
+aiohttp==3.8.3
+
+aiohttp[speedups]==3.8.3
+
+beautifulsoup4==4.11.1
+
+fuzzingbook==1.1
+
+pathlib==1.0.1
+
+aiofiles==22.1.0
+
+urllib3
