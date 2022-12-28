@@ -6,8 +6,15 @@
 ![REPO](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
 ## 👨‍💻 Homework
 
-Updating existed Django project with custom logging middleware.
-*Only authorized users can access to "Contact list" page and view action statistic for dedicated user.
+Async crawler with desired depth and initial url(s).
+
+### 🎬 Run locally
+
+Run an application locally.
+
+```shell
+make homework-i-run
+```
 
 
 ### 🎬 Run
@@ -30,42 +37,4 @@ Delete all created artifacts from run.
 
 ```shell
 make d-homework-i-purge
-```
-### ♻️ Make migrations
-
-Create a migrations
-
-```shell
-make migrations
-```
-### 💾 Migrate
-
-Apply a migration
-
-```shell
-make migrate
-```
-### 📗 Command: generate contacts
-
-Default value - 50 contacts
-
-```shell
-make generate-contacts
-```
-For custom generation with desired amount use a terminal command:
-```shell
-python manage.py generate_contacts --amount <desired qtty>
-```
-### 📕 Command: delete contacts
-
-Deleting all auto-generated contacts
-
-```shell
-make delete-contacts
-```
-### 🦸 Create a superuser
-login: admin | password: admin123
-
-```shell
-make init-dev-i-create-superuser
 ```
