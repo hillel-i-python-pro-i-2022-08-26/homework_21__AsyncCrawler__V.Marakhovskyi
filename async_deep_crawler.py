@@ -128,4 +128,4 @@ if __name__ == "__main__":
     start = time.perf_counter()
     asyncio.run(main())
     elapsed = time.perf_counter() - start
-    logger.debug(f"Program completed in {elapsed:0.5f} seconds.")requirements.txt
+    logger.debug(f"Program completed in {elapsed:0.5f} seconds.")
