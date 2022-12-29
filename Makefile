@@ -1,7 +1,8 @@
 .PHONY: homework-i-run
 # Run homework.
 homework-i-run:
-	@python manage.py runserver
+	@make init-dev && \
+		python async_deep_crawler.py
 
 .PHONY: homework-i-purge
 # Delete all created artifacts, related with homework execution
