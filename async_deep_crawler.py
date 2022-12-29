@@ -54,15 +54,17 @@ logger.addHandler(ch)
 async def fetch(url, session: aiohttp.ClientSession, **kwargs) -> str:
     """Get HTML-text from the url."""
     response = await session.request(method="GET", url=url, **kwargs)
+    response.raise_for_status()
     html_text = await response.text()
     return html_text
 
 
-async def parse(url: str, session: aiohttp.ClientSession, **kwargs) -> list:
+async def parse(url: str, session: aiohttp.ClientSession, semaphore: asyncio.Semaphore, **kwargs) -> list:
     """Find HREFs in the HTML of `url`."""
     found = set()  # get rid of duplicates initially
     try:
-        html = await fetch(url=url, session=session, **kwargs)
+        async with semaphore:
+            html = await fetch(url=url, session=session, **kwargs)
     except (
         aiohttp.ClientError,
         aiohttp.http_exceptions.HttpProcessingError,
@@ -111,30 +113,31 @@ async def work(
     queue: asyncio.Queue, initial_urls: list, session: aiohttp.ClientSession, depth: int, semaphore: asyncio.Semaphore
 ) -> None:
     """Main function which represent a queue. Here is all actions happens."""
-    async with semaphore:
-        await queue.put(initial_urls)
-        logger.warning(f"------Diving into the first depth. Desired depth: {depth}------")
-        processed_urls = 0
-        all_found_links = []
-        while depth != 0:
-            next_depth_set = []
-            current_depth_set = await queue.get()
-            await write_processed_urls(file=outfile, urls=current_depth_set, depth=depth)
-            for url in current_depth_set:
-                new_links = await parse(url=url, session=session)  # Get a set of found links without duplicates
-                processed_urls += 1
-                next_depth_set += new_links
-                all_found_links.extend(iter(new_links))  # Sourcery suggestion
-            await write_found_links(file=outfile, urls=next_depth_set)
-            await queue.put(set(next_depth_set))
-            depth -= 1
-            logger.warning(f"[Transition to the next depth. Remaining depth: {depth}]")
-            logger.warning(f"Total processed urls: {processed_urls}")
-            logger.warning(f"Total found links: {len(all_found_links)}")
-        logger.debug(f"<<<Required depth [{DEPTH}] reached>>>")
-        logger.debug(f"Total processed urls: {processed_urls}")
-        logger.debug(f"Total found links: {len(all_found_links)}")
-        logger.debug(f"All links was written to: {outfile}")
+    await queue.put(initial_urls)
+    logger.warning(f"------Diving into the first depth. Desired depth: {depth}------")
+    processed_urls = 0
+    all_found_links = []
+    while depth != 0:
+        next_depth_set = []
+        current_depth_set = await queue.get()
+        await write_processed_urls(file=outfile, urls=current_depth_set, depth=depth)
+        for url in current_depth_set:
+            new_links = await parse(
+                url=url, session=session, semaphore=semaphore
+            )  # Get a set of found links without duplicates
+            processed_urls += 1
+            next_depth_set += new_links
+            all_found_links.extend(iter(new_links))  # Sourcery suggestion
+        await write_found_links(file=outfile, urls=next_depth_set)
+        await queue.put(set(next_depth_set))
+        depth -= 1
+        logger.warning(f"[Transition to the next depth. Remaining depth: {depth}]")
+        logger.warning(f"Total processed urls: {processed_urls}")
+        logger.warning(f"Total found links: {len(all_found_links)}")
+    logger.debug(f"<<<Required depth [{DEPTH}] reached>>>")
+    logger.debug(f"Total processed urls: {processed_urls}")
+    logger.debug(f"Total found links: {len(all_found_links)}")
+    logger.debug(f"All links was written to: {outfile}")
 
 
 async def main():
