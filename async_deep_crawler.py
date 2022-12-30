@@ -122,7 +122,7 @@ async def work(
     """Main function which represent a queue. Here is all actions happens."""
     await queue.put(initial_urls)
     logger.warning(f"------Diving into the first depth. Desired depth: {depth}------")
-    processed_urls = 0
+    processed_urls = []
     all_found_links = []
     exitFlag2 = False
     while depth != 0:
@@ -138,7 +138,7 @@ async def work(
             new_links = await parse(
                 url=url, session=session, semaphore=semaphore
             )  # Get a set of found links without duplicates
-            processed_urls += 1
+            processed_urls.append(url)
             next_depth_set += new_links
 
             for new_link in new_links:
@@ -158,8 +158,8 @@ async def work(
         logger.warning(f"Total processed urls: {processed_urls}")
         logger.warning(f"Total found links: {len(all_found_links)}")
     logger.debug(f"<<<Depth [{DEPTH - depth}] reached>>>")
-    logger.debug(f"Total found links: {len(all_found_links)}")
-    logger.debug(f"Total processed urls: {processed_urls}")
+    logger.debug(f"Total found links: {len(all_found_links)}, exactly {all_found_links}")
+    logger.debug(f"Total processed urls: {len(processed_urls)}, exactly {processed_urls}")
     logger.debug(f"All links was written to: {outfile}")
 
 
