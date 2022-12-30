@@ -154,7 +154,8 @@ async def main():
 
 if __name__ == "__main__":
     DEPTH = 2
-    initial_urls = ["https://www.safepal.com/", "https://superfastpython.com/", "https://example.com"]
+    # initial_urls = ["https://www.safepal.com/", "https://superfastpython.com/", "https://example.com"]
+    initial_urls = ["https://www.godina-worldwide.com/#", "https://example.com"]
     logger.debug("Initializing a crawling....")
     start = time.perf_counter()
     # Start the asyncio program (entry-point)
