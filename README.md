@@ -6,11 +6,12 @@
 ![REPO](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)
 ## 👨‍💻 Homework
 
-Async crawler with desired depth. All packed in Docker.
+Async crawler with variable parameters: depth and qtty of processed URLs. 
+All packed in Docker.
 
 ### 🎬 Run locally
 
-Run an application locally with automatic installing of requirements.
+Run an application locally with automatic installing of all requirements.
 
 ```shell
 make homework-i-run
