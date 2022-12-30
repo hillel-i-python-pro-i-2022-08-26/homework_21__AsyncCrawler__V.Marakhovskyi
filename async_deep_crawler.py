@@ -9,13 +9,13 @@ import pathlib
 import aiofiles
 
 # Create paths for writing into a file
-here = pathlib.Path(__file__).parent
-outpath = here.joinpath("output")
-outfile = outpath.joinpath("outfile.txt")
+here = pathlib.Path(__file__).parent  # get current directory
+outpath = here.joinpath("output")  # create "output" subdirectory
+outfile = outpath.joinpath("outfile.txt")  # create "outfile.txt" file in "output" subdirectory
 
 # Formatting logger
 class CustomFormatter(logging.Formatter):
-
+    # define colors for log levels
     grey = "\x1b[0;37m"
     light_blue = "\x1b[1;36m"
     yellow = "\x1b[1;33m"
@@ -24,8 +24,10 @@ class CustomFormatter(logging.Formatter):
     green = "\x1b[1;32m"
     reset = "\x1b[0m"
 
+    # log message format
     format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
 
+    # mapping of log levels to log message formats
     FORMATS = {
         logging.DEBUG: green + format + reset,
         logging.INFO: grey + format + reset,
