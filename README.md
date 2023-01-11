@@ -7,6 +7,9 @@
 ## 👨‍💻 Homework
 
 Async crawler with variable parameters: depth and qtty of processed URLs. 
+Also available start via console. Default params: 
+-processed_urls: 30
+-depth: 2
 All packed in Docker.
 
 ### 🎬 Run locally
@@ -17,8 +20,14 @@ Run an application locally with automatic installing of all requirements.
 make homework-i-run
 ```
 
+### 🎛️ Run in console with argparse
+Run an application locally through console with variable arguments. 
 
-### 🎬 Run
+```shell
+python async_deep_crawler.py -processed_urls 40 -depth 2
+```
+
+### 📦 Run in docker
 
 Run an application in Docker.
 

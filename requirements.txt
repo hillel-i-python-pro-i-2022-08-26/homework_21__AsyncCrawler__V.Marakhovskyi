@@ -1,4 +1,3 @@
-
 # [code_style]-[BEGIN]
 # Pre-commit hook.
 pre-commit==2.21.0
@@ -10,16 +9,21 @@ black==22.12.0
 flake8==6.0.0
 # [code_style]-[END]
 
-
+# Analogue of "Requests" library but supports Async operations.
 aiohttp==3.8.3
 
-
+# Parsing HTML and XML documents (including having malformed markup, i.e. non-closed tags, so named after tag soup).
+# It creates a parse tree for parsed pages that can be used to extract data from HTML, which is useful for web scraping.
 beautifulsoup4==4.11.1
 
-
-
+# Representing filesystem paths with semantics appropriate for different operating systems.
 pathlib==1.0.1
 
+# Handling local disk files in asyncio applications.
 aiofiles==22.1.0
 
+# Used for transforming relative links to absolute.
 urllib3==1.26.13
+
+# Used to get command line arguments and run program via console.
+argparse==1.4.0

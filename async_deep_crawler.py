@@ -7,6 +7,7 @@ import aiohttp
 import bs4
 import pathlib
 import aiofiles
+import argparse
 
 # Create paths for writing into a file
 here = pathlib.Path(__file__).parent  # get current directory
@@ -98,7 +99,7 @@ async def parse(url: str, session: aiohttp.ClientSession, semaphore: asyncio.Sem
 async def write_current_depth(file, depth: int) -> None:
     """Write the current crawling depth to `file`."""
     async with aiofiles.open(file, "a") as f:
-        await f.write(f"\nCurrent depth is {DEPTH - depth + 1}.\n")
+        await f.write(f"\nCurrent depth is {args.depth - depth + 1}.\n")
 
 
 async def write_processed_urls(file, url: list) -> None:
@@ -153,13 +154,13 @@ async def work(
         logger.warning(f"[Transition to the next depth. Remaining depth: {depth}]")
         logger.warning(f"Total processed urls: {len(processed_urls)}")
         logger.warning(f"Total found links: {len(all_found_links)}")
-    logger.debug(f"<<<Depth [{DEPTH - depth}] reached>>>")
+    logger.debug(f"<<<Depth [{args.depth - depth}] reached>>>")
     logger.debug(f"Total found links: {len(all_found_links)}")
     logger.debug(f"Total processed urls: {len(processed_urls)}")
     logger.debug(f"All links was written to: {outfile}")
 
 
-async def main():
+async def main(max_processed_urls, depth):
     # Create the shared queue
     queue = asyncio.Queue()
     semaphore = asyncio.Semaphore(10)
@@ -169,20 +170,26 @@ async def main():
                 queue=queue,
                 initial_urls=initial_urls,
                 session=session,
-                depth=DEPTH,
+                depth=depth,
                 semaphore=semaphore,
-                limit=MAX_PROCESSED_URLS,
+                limit=max_processed_urls,
             )
         )
 
 
 if __name__ == "__main__":
-    DEPTH = 2
-    MAX_PROCESSED_URLS = 30
     initial_urls = ["https://en.wikipedia.org/wiki/Main_Page", "https://example.com"]
+
+    parser = argparse.ArgumentParser(description="Async_Crawler")
+    parser.add_argument(
+        "-processed_urls", type=int, help="Input max qtty of urls for processing", required=False, default=30
+    )
+    parser.add_argument("-depth", type=int, help="Input desired depth", required=False, default=2)
+    args = parser.parse_args()
+
     logger.debug("Initializing a crawling....")
     start = time.perf_counter()
     # Start the asyncio program (entry-point)
-    asyncio.run(main())
+    asyncio.run(main(max_processed_urls=args.processed_urls, depth=args.depth))
     elapsed = time.perf_counter() - start
     logger.debug(f"Program completed in {elapsed:0.5f} seconds.")
